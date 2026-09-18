@@ -38,7 +38,9 @@
 7. Effort/thinking budget low–medium for mechanical work; keep high where ambiguity is the task.
 8. Batch script (24h turnaround, −50%) for overnight sweeps and bulk refactors.
 
-**Exit gate:** payload ↓ ≥30% vs baseline on the counted request; T1–T3 success unchanged; escalation rate flat.
+**Exit gate:** payload reduced vs this repo's baseline on the counted request (threshold set from phase 0 —
+the "≥30%" figure in earlier drafts was illustrative and external in origin); T1–T3 success unchanged;
+escalation rate flat.
 
 ## Phase 2 — Contract + sessions (`L2`, `L4`)
 

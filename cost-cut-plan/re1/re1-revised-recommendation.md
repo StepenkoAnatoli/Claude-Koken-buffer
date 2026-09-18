@@ -1,5 +1,10 @@
 # re1 — Revised recommendation
 
+> **Evidence boundary (binding):** thresholds quoted below (e.g. payload ↓ ≥30%) are **provisional and
+> illustrative**; they derive from external measurements and must be replaced by values set from this
+> repository's phase-0 baseline. The ordering is a **working hypothesis** pending the conditional chain in
+> `re1-evidence-boundary.md` §5. See also `../final/final-decision.md`.
+
 **Status: current working proposal.** This replaces the version-1 recommendation in
 `../en1/en1-initial-recommendation.md`. Nothing here is applied until `../final/` is verified.
 

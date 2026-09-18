@@ -1,5 +1,9 @@
 # re1 — Arena feedback on the version-1 plan
 
+> **Evidence boundary (binding):** the figures in §2 are **external community measurements**, cited as
+> motivation only — not repository results, forecast inputs, or acceptance criteria. See
+> `re1-evidence-boundary.md`.
+
 Reviewer: Arena AI. Target: `en1/` (four approaches P1–P4 + staged recommendation).
 Purpose: state what holds, what is missing, and what must change before this becomes the `final` plan.
 Standard applied: **"correct and it delivers"** — a lever counts only if it moves a measured metric on

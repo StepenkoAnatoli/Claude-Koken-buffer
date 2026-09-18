@@ -1,5 +1,9 @@
 # re1 — Comparison, scoring, and risks
 
+> **Evidence boundary (binding):** every figure in this file is an **external community measurement**, cited
+> as motivation only. None is a repository result, a forecast input, or an acceptance criterion. Thresholds
+> are provisional until set from this repository's phase-0 baseline. See `re1-evidence-boundary.md`.
+
 All candidate levers from version 1 (`P1–P4`) and from the review (`O1–O4`) are deduplicated here into
 **L1–L7**. Scoring 1–5; "Delivers" = effect size × reliability, not elegance.
 

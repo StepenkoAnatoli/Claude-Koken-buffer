@@ -31,7 +31,8 @@ cost-cut-plan/
 │   ├── re1-comparison-and-risks.md             deduplicated levers, scoring, traps, risk register
 │   ├── re1-assumption-register.md              assumptions, labels, consequences of error
 │   ├── re1-facts-sweep.md                      ≤1h fact sweep that answers both plans' gates
-│   └── re1-revised-recommendation.md
+│   ├── re1-revised-recommendation.md
+│   └── re1-evidence-boundary.md                BINDING: what may and may not be claimed
 └── final/                                      proposed final, pending verification
     ├── final-decision.md
     ├── final-implementation-plan.md
@@ -69,3 +70,16 @@ Rename is trivial if any side prefers another scheme.
 Cost ≈ **turns × context-per-turn × cache-adjusted rate**, and output tokens are the cheapest term.
 Both plans therefore converge on the same first move (`I1`), and on the same rule: **a token saving that
 adds a turn, a defect, an unsafe omission, or unacceptable user effort is not a saving.**
+
+## Conditional recommendation (agreed — supersedes any ranking)
+
+1. **Instrument first** — change no behaviour until measurement distinguishes successful work, retries,
+   correction turns, cache usage, and failures.
+2. **Identify whether the constraint is dollars, capacity, or both.**
+3. **Reproduce measurements** in this environment (facts sweep F1–F13, then replay tasks T1–T3).
+4. **Benchmark `I1` and the other candidates** under the matched protocol and quality rubric.
+5. **Rank from repository-specific evidence.**
+
+Until step 5 completes, `I1`-first is a **working hypothesis, not a decision**. Every external figure in this
+folder is motivation to test something — never a result, a forecast input, or an acceptance criterion.
+Binding rule: [`re1/re1-evidence-boundary.md`](re1/re1-evidence-boundary.md).
