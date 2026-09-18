@@ -1,53 +1,71 @@
 # Claude-Koken-buffer — token-cost reduction plan
 
-**Status: PLAN ONLY.** No code, configuration, or workflow changes have been applied. Nothing in
+**Status: PLAN ONLY.** No code, configuration, routing, or workflow change has been applied. Nothing in
 `final/` takes effect until the user verifies it.
 
-## Marker semantics (as defined by the user)
+## Marker semantics
 
-| Mark | Meaning | Folder state |
+| Mark | Meaning | State |
 |---|---|---|
-| `en1` | First planning version | Historical record. Superseded by `re1`. Do not implement from here. |
-| `re1` | Revised version after Arena AI discussion and review | Current working proposal. This is the discussion artifact. |
-| `final` | Final plan approved for implementation | **Proposed final, pending user verification.** |
+| `en1` | First planning version (originally received) | Historical record; superseded |
+| `en2` | Second planning version (Copilot, "Cost-cut plan v2") | Received; reviewed in `re1` |
+| `re1` | Revised version after Arena AI review | **Current working proposal** — the discussion artifact |
+| `final` | Final plan approved for implementation | Proposed, **pending user verification** |
 
 ## Structure
 
 ```
 cost-cut-plan/
-├── README.md                        (this file — index + how to read)
-├── en1/                             first planning version (as received)
+├── README.md                                   this file — index + naming + how to read
+├── DECISION-LOG.md                             dated decisions, evidence, open blockers
+├── en1/                                        first planning version (as received)
 │   ├── en1-problem-definition.md
 │   ├── en1-four-approaches.md
 │   ├── en1-baseline-metrics.md
 │   └── en1-initial-recommendation.md
-├── re1/                             revised after Arena AI review
-│   ├── re1-arena-feedback.md
-│   ├── re1-comparison-and-risks.md
-│   ├── re1-assumption-register.md   assumptions + decision-critical open questions
+├── en2/                                        second planning version (Copilot v2, as received)
+│   └── en2-copilot-v2-received.md
+├── re1/                                        revised after Arena AI review
+│   ├── re1-arena-feedback.md                   review of en1
+│   ├── re1-review-of-copilot-v2.md             review of en2  ← the current discussion document
+│   ├── re1-comparison-and-risks.md             deduplicated levers, scoring, traps, risk register
+│   ├── re1-assumption-register.md              assumptions, labels, consequences of error
+│   ├── re1-facts-sweep.md                      ≤1h fact sweep that answers both plans' gates
 │   └── re1-revised-recommendation.md
-└── final/                           proposed final, pending verification
+└── final/                                      proposed final, pending verification
     ├── final-decision.md
     ├── final-implementation-plan.md
     ├── final-measurement-plan.md
     └── final-acceptance-criteria.md
 ```
 
+Governance material from `en2` (assumptions table, benchmark protocol, telemetry/privacy rules, rollout and
+rollback) is folded into `final/` on approval; it is not duplicated here to avoid two sources of truth.
+
+## Naming: versions vs interventions
+
+Version marks (`en1`, `en2`, `re1`, `final`) are **not** intervention IDs. Canonical intervention IDs are
+`I1`–`I4`:
+
+| Canonical | Intervention | Copilot v2 alias | Earlier alias |
+|---|---|---|---|
+| **I1** | Prefix diet + cache freeze | EN1 | L1 |
+| **I2** | Retrieval discipline (scoped context, filtered output, subagents) | EN2 | L3 |
+| **I3** | Session shaping (compact-not-clear, thresholds, handoffs) | EN3 | L4 |
+| **I4** | Rate routing (model tier, effort budget, batch) | EN4 | L5 |
+
+Plus standing hygiene: **H1** diff-shaped edits (v2 EN "patch-only"), **H2** concise interaction policy.
+Rename is trivial if any side prefers another scheme.
+
 ## How to read it in 3 minutes
 
-0. `re1/re1-assumption-register.md` — what is assumed, what is unknown, and what must be answered before
-   any phase starts. Answer §3 before reading the ranking; a wrong answer there invalidates parts of it.
-1. `en1/en1-four-approaches.md` — what version 1 proposed (patch-only output, symbol-focused context,
-   tests as the task contract, concise interaction policy).
-2. `re1/re1-arena-feedback.md` — what holds, what is missing, what changes and why.
-3. `re1/re1-comparison-and-risks.md` — one deduplicated lever list (L1–L7), scored, with traps.
-4. `final/final-decision.md` — the recommendation, its falsification test, and the conditions under
-   which it must be changed.
+1. `DECISION-LOG.md` — what was decided, when, and what is still blocked.
+2. `en1/en1-four-approaches.md` — version 1's four approaches.
+3. `re1/re1-review-of-copilot-v2.md` — where the two plans agree and the seven proposed amendments.
+4. `final/final-decision.md` — the gated recommendation, its falsification test, sign-off conditions.
 
-## Two conventions that prevent confusion later
+## The one-line thesis
 
-- **Version marks (`en1`/`re1`/`final`) are not option IDs.** The individual levers are `P1–P4`
-  (as proposed in version 1) and `L1–L7` (deduplicated working list in `re1`). Earlier drafts used
-  `EN1–EN4` for *options*, which collides with `en1` = *version 1*; that naming is retired.
-- **Every number cited in `re1`/`final` carries its source** so Copilot can audit the ranking instead
-  of trusting it.
+Cost ≈ **turns × context-per-turn × cache-adjusted rate**, and output tokens are the cheapest term.
+Both plans therefore converge on the same first move (`I1`), and on the same rule: **a token saving that
+adds a turn, a defect, an unsafe omission, or unacceptable user effort is not a saving.**
