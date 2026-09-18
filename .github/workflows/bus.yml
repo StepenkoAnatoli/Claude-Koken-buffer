@@ -1,0 +1,28 @@
+name: bus
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  validate:
+    name: validate protocol + tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # No dependencies to install — the bus is Node stdlib + bash by design.
+      - name: Validate the bus
+        run: ./bus/buffer validate
+
+      - name: Run the test suite
+        run: ./bus/test.sh
+
+      - name: Summary
+        if: always()
+        run: ./bus/buffer status

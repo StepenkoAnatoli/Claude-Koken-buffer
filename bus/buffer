@@ -1,0 +1,696 @@
+#!/usr/bin/env node
+'use strict';
+
+/**
+ * buffer — git-backed message bus for Claude-Koken-buffer.
+ *
+ * Commands: send, validate, inbox, thread, route, archive, status, modules, init.
+ * No dependencies, no network, no API keys. Git is the transport.
+ */
+
+const fs = require('fs');
+const path = require('path');
+const { execFileSync } = require('child_process');
+const core = require('./lib/core');
+const fmlib = require('./lib/fm');
+const { validate } = require('./lib/validate');
+
+// ------------------------------------------------------------------ output
+
+const TTY = process.stdout.isTTY && !process.env.NO_COLOR;
+const c = {
+  dim: (s) => (TTY ? `\u001b[2m${s}\u001b[0m` : s),
+  bold: (s) => (TTY ? `\u001b[1m${s}\u001b[0m` : s),
+  red: (s) => (TTY ? `\u001b[31m${s}\u001b[0m` : s),
+  yellow: (s) => (TTY ? `\u001b[33m${s}\u001b[0m` : s),
+  green: (s) => (TTY ? `\u001b[32m${s}\u001b[0m` : s),
+  cyan: (s) => (TTY ? `\u001b[36m${s}\u001b[0m` : s),
+};
+
+function die(msg) {
+  process.stderr.write(`${c.red('error')} ${msg}\n`);
+  process.exit(1);
+}
+
+// ------------------------------------------------------------------ args
+
+function parseArgs(argv) {
+  const flags = {};
+  const positional = [];
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if (arg.startsWith('--')) {
+      const eq = arg.indexOf('=');
+      if (eq !== -1) {
+        flags[arg.slice(2, eq)] = arg.slice(eq + 1);
+      } else {
+        const key = arg.slice(2);
+        const next = argv[i + 1];
+        if (next === undefined || next.startsWith('--')) flags[key] = true;
+        else {
+          flags[key] = next;
+          i += 1;
+        }
+      }
+    } else {
+      positional.push(arg);
+    }
+  }
+  return { flags, positional };
+}
+
+function readStdin() {
+  try {
+    return fs.readFileSync(0, 'utf8');
+  } catch {
+    return '';
+  }
+}
+
+function resolveMessage(messages, ref) {
+  const exact = messages.find((m) => String(m.meta.id) === ref);
+  if (exact) return exact;
+  const byFile = messages.find((m) => m.rel === ref || m.rel.endsWith(`/${ref}`));
+  if (byFile) return byFile;
+  const partial = messages.filter((m) => String(m.meta.id).includes(ref));
+  if (partial.length === 1) return partial[0];
+  if (partial.length > 1) {
+    die(`"${ref}" matches ${partial.length} messages:\n  ${partial.map((m) => m.meta.id).join('\n  ')}`);
+  }
+  return null;
+}
+
+// ------------------------------------------------------------------ send
+
+function cmdSend(flags) {
+  const modules = core.loadModules();
+  const thread = String(flags.thread || '').trim();
+  const from = String(flags.from || '').trim();
+  const to = core.asList(flags.to);
+  const subject = String(flags.subject || '').trim();
+  const intent = String(flags.intent || 'note').trim();
+
+  if (!thread) die('--thread is required (lower-kebab, e.g. cost-cut)');
+  if (!from) die('--from is required');
+  if (!to.length) die('--to is required (comma-separated for several recipients)');
+  if (!subject) die('--subject is required');
+
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(thread)) die(`--thread "${thread}" must be lower-kebab`);
+  if (!modules.has(from)) die(`unknown --from "${from}". Registered: ${[...modules.keys()].join(', ')}`);
+  for (const t of to) {
+    if (!modules.has(t)) die(`unknown --to "${t}". Registered: ${[...modules.keys()].join(', ')}`);
+  }
+  if (!Object.prototype.hasOwnProperty.call(core.INTENTS, intent)) {
+    die(`unknown --intent "${intent}". One of: ${Object.keys(core.INTENTS).join(', ')}`);
+  }
+
+  const re = core.asList(flags.re);
+  if (core.REQUIRE_RE.has(intent) && !re.length) {
+    die(`intent "${intent}" requires --re <message-id>`);
+  }
+  const { messages } = core.load();
+  const ids = core.byId(messages);
+  for (const ref of re) {
+    if (!ids.has(ref)) die(`--re "${ref}" does not name an existing message`);
+  }
+
+  let body = '';
+  if (flags.body) body = String(flags.body);
+  else if (flags.file) {
+    const p = path.resolve(core.ROOT, String(flags.file));
+    if (!fs.existsSync(p)) die(`--file "${flags.file}" not found`);
+    body = fs.readFileSync(p, 'utf8');
+  } else if (!process.stdin.isTTY) body = readStdin();
+
+  if (!body.trim()) {
+    body = [
+      '## Context',
+      '',
+      'TODO — why this message exists.',
+      '',
+      '## Content',
+      '',
+      'TODO — the substance.',
+      '',
+      '## Requested of the recipient',
+      '',
+      'TODO — exactly what you want back.',
+      '',
+    ].join('\n');
+  }
+
+  const draft = flags.draft === true || flags.draft === 'true';
+  const seq = core.nextSeq(thread);
+  const id = core.makeId(thread, seq, from);
+  const slug = core.slugify(subject);
+  const toPart = to.length > 1 ? 'all' : to[0];
+  const file = path.join(
+    core.threadDir(thread),
+    `${String(seq).padStart(3, '0')}-${from}-to-${toPart}-${slug}.md`,
+  );
+
+  let date = core.nowStamp();
+  if (flags.date) {
+    date = String(flags.date).trim();
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(date)) {
+      die(`--date "${date}" must be UTC YYYY-MM-DDThh:mm:ssZ`);
+    }
+  }
+
+  const meta = {
+    spec: core.SPEC,
+    id,
+    thread,
+    from,
+    to,
+    date,
+    intent,
+    status: draft ? 'draft' : 'open',
+    subject,
+  };
+  if (flags.via) meta.via = core.asList(flags.via);
+  if (flags.cc) meta.cc = core.asList(flags.cc);
+  if (re.length) meta.re = re;
+  meta.evidence = flags.evidence ? String(flags.evidence) : 'none';
+  if (flags.artifacts) meta.artifacts = core.asList(flags.artifacts);
+  if (flags.labels) meta.labels = core.asList(flags.labels);
+  if (flags.reconstructed === true || flags.reconstructed === 'true') meta.reconstructed = true;
+
+  const statusFlag = flags.status ? String(flags.status) : null;
+  if (statusFlag) {
+    if (!Object.prototype.hasOwnProperty.call(core.STATUSES, statusFlag)) {
+      die(`unknown --status "${statusFlag}". One of: ${Object.keys(core.STATUSES).join(', ')}`);
+    }
+    if (statusFlag === 'agreed' && from !== 'human') {
+      die('only "human" may send a message with status "agreed"');
+    }
+    meta.status = statusFlag;
+  }
+
+  const message = { file, rel: core.rel(file), meta, body };
+  core.writeMessage(message);
+
+  const routed = [];
+  // Only an `open` message belongs in an inbox. Anything already resolved goes
+  // straight to the archive pointer set, so inboxes never show settled work.
+  const inboxable = meta.status === 'open';
+  if (!draft) {
+    core.writePointer('outbox', from, message);
+    routed.push(`outbox/${from}`);
+    if (!inboxable) {
+      const note = path.join(core.DIRS.archive, thread, `${path.basename(file, '.md')}.ptr`);
+      fs.mkdirSync(path.dirname(note), { recursive: true });
+      fs.writeFileSync(note, `${message.rel}\n`, 'utf8');
+      routed.push(`archive/${thread}`);
+    } else {
+      for (const t of to) {
+        core.writePointer('inbox', t, message);
+        routed.push(`inbox/${t}`);
+      }
+    }
+    // A reply closes the message it responds to — but ONLY if that message is
+    // still open. A terminal status (agreed/superseded/rejected/archived) is a
+    // governance record and must never be downgraded by a later reply.
+    for (const ref of re) {
+      const target = ids.get(ref);
+      if (!target) continue;
+      if (core.TERMINAL.has(String(target.meta.status))) continue;
+      if (target.meta.status !== 'open') continue;
+      core.setStatus(target, 'answered');
+      core.clearPointers(target);
+    }
+  }
+
+  process.stdout.write(`${c.green('created')} ${c.bold(id)}\n`);
+  process.stdout.write(`  file    ${message.rel}\n`);
+  process.stdout.write(`  status  ${meta.status}\n`);
+  if (routed.length) process.stdout.write(`  routed  ${routed.join(', ')}\n`);
+  if (re.length) process.stdout.write(`  re      ${re.join(', ')} ${c.dim('(marked answered)')}\n`);
+  process.stdout.write(`\n${c.dim('Edit the body, then: bus/buffer validate && git add -A && git commit')}\n`);
+}
+
+// -------------------------------------------------------------- validate
+
+function cmdValidate(flags) {
+  const { findings, messages, modules } = validate();
+  const errors = findings.filter((f) => f.level === 'error');
+  const warnings = findings.filter((f) => f.level === 'warning');
+
+  if (flags.json) {
+    process.stdout.write(JSON.stringify({ ok: errors.length === 0, errors, warnings }, null, 2) + '\n');
+    process.exit(errors.length ? 1 : 0);
+  }
+
+  const groups = new Map();
+  for (const f of findings) {
+    if (!groups.has(f.where)) groups.set(f.where, []);
+    groups.get(f.where).push(f);
+  }
+  for (const [where, list] of groups) {
+    process.stdout.write(`${c.bold(where)}\n`);
+    for (const f of list) {
+      const tag = f.level === 'error' ? c.red('error  ') : c.yellow('warning');
+      process.stdout.write(`  ${tag} ${c.dim(`[${f.rule}]`)} ${f.message}\n`);
+    }
+    process.stdout.write('\n');
+  }
+
+  const summary = `${messages.length} message(s), ${modules.size} module(s) — ${errors.length} error(s), ${warnings.length} warning(s)`;
+  if (errors.length === 0 && warnings.length === 0) {
+    process.stdout.write(`${c.green('ok')} ${summary}\n`);
+  } else if (errors.length === 0) {
+    process.stdout.write(`${c.yellow('ok with warnings')} ${summary}\n`);
+  } else {
+    process.stdout.write(`${c.red('failed')} ${summary}\n`);
+  }
+  process.exit(errors.length ? 1 : 0);
+}
+
+// ----------------------------------------------------------------- inbox
+
+function cmdInbox(positional, flags) {
+  const { modules, messages } = core.load();
+  const who = positional[0];
+  if (who && !modules.has(who)) {
+    die(`unknown module "${who}". Registered: ${[...modules.keys()].join(', ')}`);
+  }
+  const targets = who ? [who] : [...modules.keys()];
+  const all = flags.all === true || flags.all === 'true';
+  const rows = [];
+
+  for (const module of targets) {
+    for (const msg of messages) {
+      const recipients = core.asList(msg.meta.to);
+      const ccs = core.asList(msg.meta.cc);
+      const isFor = recipients.includes(module) || (all && ccs.includes(module));
+      if (!isFor) continue;
+      if (!all && msg.meta.status !== 'open') continue;
+      if (msg.meta.status === 'draft' && !all) continue;
+      rows.push({ module, msg, cc: !recipients.includes(module) });
+    }
+  }
+
+  if (flags.json) {
+    process.stdout.write(
+      JSON.stringify(
+        rows.map((r) => ({
+          for: r.module,
+          id: r.msg.meta.id,
+          from: r.msg.meta.from,
+          intent: r.msg.meta.intent,
+          status: r.msg.meta.status,
+          subject: r.msg.meta.subject,
+          date: r.msg.meta.date,
+          file: r.msg.rel,
+        })),
+        null,
+        2,
+      ) + '\n',
+    );
+    return;
+  }
+
+  if (!rows.length) {
+    process.stdout.write(
+      who
+        ? `${c.dim(`inbox for "${who}" is empty`)}${all ? '' : c.dim(' (open messages only — use --all)')}\n`
+        : `${c.dim('no open messages on the bus')}\n`,
+    );
+    return;
+  }
+
+  let current = null;
+  for (const row of rows) {
+    if (row.module !== current) {
+      current = row.module;
+      const m = modules.get(current);
+      process.stdout.write(`\n${c.bold(`▸ ${current}`)} ${c.dim(`— ${m.name}`)}\n`);
+    }
+    const m = row.msg.meta;
+    const waiting = m.status === 'open' ? c.yellow('● open') : c.dim(`○ ${m.status}`);
+    process.stdout.write(
+      `  ${waiting}  ${c.cyan(String(m.id).padEnd(24))} ${c.dim(String(m.intent).padEnd(9))} from ${String(m.from).padEnd(9)} ${m.subject}${row.cc ? c.dim(' (cc)') : ''}\n`,
+    );
+    process.stdout.write(`          ${c.dim(row.msg.rel)}\n`);
+  }
+  process.stdout.write(`\n${c.dim(`${rows.length} message(s). Read one: bus/buffer thread <thread> — or open the file.`)}\n`);
+}
+
+// ---------------------------------------------------------------- thread
+
+function cmdThread(positional, flags) {
+  const { messages } = core.load();
+  const name = positional[0];
+
+  if (!name) {
+    const threads = new Map();
+    for (const m of messages) {
+      if (!threads.has(m.thread)) threads.set(m.thread, []);
+      threads.get(m.thread).push(m);
+    }
+    if (!threads.size) {
+      process.stdout.write(`${c.dim('no threads yet — create one with: bus/buffer send --thread <name> ...')}\n`);
+      return;
+    }
+    process.stdout.write(`${c.bold('threads')}\n\n`);
+    for (const [t, list] of threads) {
+      const open = list.filter((m) => m.meta.status === 'open').length;
+      const last = list[list.length - 1];
+      process.stdout.write(
+        `  ${c.cyan(t.padEnd(20))} ${String(list.length).padStart(3)} message(s)  ${open ? c.yellow(`${open} open`) : c.dim('none open')}  ${c.dim(`last: ${last.meta.date || '?'}`)}\n`,
+      );
+    }
+    process.stdout.write(`\n${c.dim('Render one: bus/buffer thread <name>')}\n`);
+    return;
+  }
+
+  const list = messages.filter((m) => m.thread === name);
+  if (!list.length) die(`no thread "${name}"`);
+
+  const full = flags.full === true || flags.full === 'true';
+  process.stdout.write(`${c.bold(`# thread: ${name}`)}  ${c.dim(`(${list.length} messages, chronological)`)}\n`);
+
+  for (const msg of list) {
+    const m = msg.meta;
+    const to = core.asList(m.to).join(', ');
+    const via = core.asList(m.via);
+    process.stdout.write(`\n${c.dim('─'.repeat(78))}\n`);
+    process.stdout.write(`${c.cyan(String(m.id))}  ${c.dim(m.date || '')}\n`);
+    process.stdout.write(
+      `${c.bold(String(m.from))} ${c.dim('→')} ${c.bold(to)}${via.length ? c.dim(` (via ${via.join(', ')})`) : ''}\n`,
+    );
+    process.stdout.write(`${c.dim('intent')} ${m.intent}   ${c.dim('status')} ${m.status}   ${c.dim('evidence')} ${m.evidence || 'none'}\n`);
+    if (m.re) process.stdout.write(`${c.dim('re')} ${core.asList(m.re).join(', ')}\n`);
+    process.stdout.write(`\n${c.bold(m.subject || '(no subject)')}\n\n`);
+
+    const body = msg.body.trim();
+    if (full) {
+      process.stdout.write(body + '\n');
+    } else {
+      const lines = body.split('\n');
+      const head = lines.slice(0, 12);
+      process.stdout.write(head.map((l) => `  ${l}`).join('\n') + '\n');
+      if (lines.length > 12) {
+        process.stdout.write(c.dim(`  … ${lines.length - 12} more lines — use --full or open ${msg.rel}\n`));
+      }
+    }
+  }
+  process.stdout.write(`\n${c.dim('─'.repeat(78))}\n`);
+}
+
+// ----------------------------------------------------------------- route
+
+function cmdRoute(positional, flags) {
+  const { modules, messages } = core.load();
+  const ref = positional[0];
+  if (!ref) die('usage: buffer route <message-id> [--to module,module] [--unroute]');
+  const msg = resolveMessage(messages, ref);
+  if (!msg) die(`no message matches "${ref}"`);
+
+  if (flags.unroute) {
+    // The envelope is the source of truth and pointers are derived, so pulling
+    // a message back must change its status — not just delete the index entries,
+    // which `reindex` would immediately restore.
+    const removed = core.clearPointers(msg);
+    if (!core.TERMINAL.has(String(msg.meta.status))) {
+      msg.meta.status = 'draft';
+      core.writeMessage(msg);
+    }
+    process.stdout.write(`${c.green('unrouted')} ${c.bold(String(msg.meta.id))} ${c.dim(`→ status ${msg.meta.status}`)}\n`);
+    for (const r of removed) process.stdout.write(`  removed ${r}\n`);
+    if (!removed.length) process.stdout.write(`  ${c.dim('(no pointers existed)')}\n`);
+    return;
+  }
+
+  const extra = core.asList(flags.to);
+  for (const t of extra) {
+    if (!modules.has(t)) die(`unknown --to "${t}"`);
+  }
+  if (extra.length) {
+    const current = core.asList(msg.meta.to);
+    msg.meta.to = [...new Set([...current, ...extra])];
+    if (msg.meta.status === 'draft') msg.meta.status = 'open';
+    core.writeMessage(msg);
+  } else if (msg.meta.status === 'draft') {
+    msg.meta.status = 'open';
+    core.writeMessage(msg);
+  }
+
+  const written = [];
+  core.writePointer('outbox', String(msg.meta.from), msg);
+  written.push(`outbox/${msg.meta.from}`);
+  for (const t of core.asList(msg.meta.to)) {
+    core.writePointer('inbox', t, msg);
+    written.push(`inbox/${t}`);
+  }
+
+  process.stdout.write(`${c.green('routed')} ${c.bold(String(msg.meta.id))} → ${core.asList(msg.meta.to).join(', ')}\n`);
+  for (const w of written) process.stdout.write(`  ${w}\n`);
+  process.stdout.write(`  status  ${msg.meta.status}\n`);
+}
+
+// --------------------------------------------------------------- archive
+
+function cmdArchive(positional, flags) {
+  const { messages } = core.load();
+  const ref = positional[0];
+  if (!ref) die('usage: buffer archive <message-id|thread> [--status archived|agreed|superseded|rejected] [--thread]');
+
+  const status = String(flags.status || 'archived');
+  if (!Object.prototype.hasOwnProperty.call(core.STATUSES, status)) {
+    die(`unknown --status "${status}". One of: ${Object.keys(core.STATUSES).join(', ')}`);
+  }
+
+  const targets =
+    flags.thread === true || flags.thread === 'true'
+      ? messages.filter((m) => m.thread === ref)
+      : [resolveMessage(messages, ref)].filter(Boolean);
+
+  if (!targets.length) die(`no message or thread matches "${ref}"`);
+
+  for (const msg of targets) {
+    if (status === 'agreed' && String(msg.meta.from) !== 'human') {
+      process.stdout.write(`${c.yellow('skipped')} ${msg.meta.id} — only "human" may mark a message agreed\n`);
+      continue;
+    }
+    core.setStatus(msg, status);
+    const removed = core.clearPointers(msg);
+    const note = path.join(core.DIRS.archive, msg.thread, `${path.basename(msg.file, '.md')}.ptr`);
+    fs.mkdirSync(path.dirname(note), { recursive: true });
+    fs.writeFileSync(note, `${msg.rel}\n`, 'utf8');
+    process.stdout.write(`${c.green(status)} ${c.bold(String(msg.meta.id))} ${c.dim(`(${removed.length} pointer(s) cleared)`)}\n`);
+  }
+  process.stdout.write(`\n${c.dim('The message file stays in bus/threads/ — archiving changes status and routing only.')}\n`);
+}
+
+// ---------------------------------------------------------------- status
+
+function cmdStatus() {
+  const { modules, messages } = core.load();
+  const { findings } = validate();
+  const errors = findings.filter((f) => f.level === 'error').length;
+  const warnings = findings.filter((f) => f.level === 'warning').length;
+
+  process.stdout.write(`${c.bold('koken bus')} ${c.dim(core.SPEC)}\n\n`);
+  process.stdout.write(`  messages   ${messages.length}\n`);
+  process.stdout.write(`  threads    ${new Set(messages.map((m) => m.thread)).size}\n`);
+  process.stdout.write(`  modules    ${modules.size}\n`);
+  process.stdout.write(
+    `  health     ${errors ? c.red(`${errors} error(s)`) : c.green('0 errors')}, ${warnings ? c.yellow(`${warnings} warning(s)`) : '0 warnings'}\n\n`,
+  );
+
+  process.stdout.write(`${c.bold('waiting on')}\n`);
+  const open = messages.filter((m) => m.meta.status === 'open');
+  if (!open.length) process.stdout.write(`  ${c.dim('nobody — no open messages')}\n`);
+  const counts = new Map();
+  for (const m of open) {
+    for (const t of core.asList(m.meta.to)) counts.set(t, (counts.get(t) || 0) + 1);
+  }
+  for (const [module, n] of [...counts].sort((a, b) => b[1] - a[1])) {
+    process.stdout.write(`  ${c.yellow('●')} ${String(module).padEnd(10)} ${n} open\n`);
+  }
+
+  let head = '';
+  try {
+    head = execFileSync('git', ['-C', core.ROOT, 'rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
+  } catch {
+    head = 'unknown';
+  }
+  process.stdout.write(`\n${c.dim(`transport: git @ ${head}`)}\n`);
+}
+
+// --------------------------------------------------------------- modules
+
+function cmdModules(flags) {
+  const modules = core.loadModules();
+  if (flags.json) {
+    process.stdout.write(JSON.stringify([...modules.values()], null, 2) + '\n');
+    return;
+  }
+  process.stdout.write(`${c.bold('registered modules')} ${c.dim('(bus/modules.json)')}\n\n`);
+  for (const m of modules.values()) {
+    process.stdout.write(`  ${c.cyan(m.id.padEnd(10))} ${c.bold(m.name)} ${c.dim(`[${m.kind}, access: ${m.access}]`)}\n`);
+    process.stdout.write(`  ${' '.repeat(10)} ${c.dim(m.role)}\n\n`);
+  }
+}
+
+// --------------------------------------------------------------- reindex
+
+/**
+ * Rebuild every inbox/outbox/archive pointer from the envelopes.
+ * Pointers are a derived index; this is the repair path after a bad merge,
+ * a manual file edit, or a conflicted `git pull`.
+ */
+function cmdReindex() {
+  const { modules, messages } = core.load();
+  for (const kind of ['inbox', 'outbox', 'archive']) {
+    const root = core.DIRS[kind];
+    if (!fs.existsSync(root)) continue;
+    for (const sub of fs.readdirSync(root)) {
+      const dir = path.join(root, sub);
+      if (!fs.statSync(dir).isDirectory()) continue;
+      for (const f of fs.readdirSync(dir)) {
+        if (f.endsWith('.ptr')) fs.unlinkSync(path.join(dir, f));
+      }
+    }
+  }
+
+  let n = 0;
+  for (const msg of messages) {
+    const from = String(msg.meta.from);
+    if (modules.has(from)) {
+      core.writePointer('outbox', from, msg);
+      n += 1;
+    }
+    if (msg.meta.status === 'open') {
+      for (const to of core.asList(msg.meta.to)) {
+        if (!modules.has(to)) continue;
+        core.writePointer('inbox', to, msg);
+        n += 1;
+      }
+    } else if (core.TERMINAL.has(String(msg.meta.status))) {
+      const note = path.join(core.DIRS.archive, msg.thread, `${path.basename(msg.file, '.md')}.ptr`);
+      fs.mkdirSync(path.dirname(note), { recursive: true });
+      fs.writeFileSync(note, `${msg.rel}\n`, 'utf8');
+      n += 1;
+    }
+  }
+  process.stdout.write(`${c.green('reindex')} rebuilt ${n} pointer(s) from ${messages.length} envelope(s)\n`);
+}
+
+// ------------------------------------------------------------------ init
+
+function cmdInit() {
+  const modules = core.loadModules();
+  const created = [];
+  for (const dir of Object.values(core.DIRS)) {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+      created.push(core.rel(dir));
+    }
+  }
+  for (const id of modules.keys()) {
+    for (const kind of ['inbox', 'outbox']) {
+      const dir = path.join(core.DIRS[kind], id);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+        created.push(core.rel(dir));
+      }
+      const keep = path.join(dir, '.gitkeep');
+      if (!fs.existsSync(keep)) fs.writeFileSync(keep, '', 'utf8');
+    }
+  }
+  process.stdout.write(
+    created.length
+      ? `${c.green('init')} created ${created.length} director(ies)\n${created.map((d) => `  ${d}`).join('\n')}\n`
+      : `${c.green('init')} bus layout already complete\n`,
+  );
+}
+
+// ------------------------------------------------------------------ help
+
+function help() {
+  process.stdout.write(`${c.bold('buffer')} — git-backed message bus for ${c.dim('Claude-Koken-buffer')}
+
+${c.bold('USAGE')}
+  bus/buffer <command> [args] [flags]
+
+${c.bold('COMMANDS')}
+  send        Create and route a message
+  validate    Verify schema, ids, paths, and required fields
+  inbox       Show pending messages for a module
+  thread      Render a conversation chronologically
+  route       Move or copy a message to recipients
+  archive     Mark handled messages
+  reindex     Rebuild inbox/outbox pointers from the envelopes (repair)
+  status      One-screen bus health summary
+  modules     List registered participants
+  init        Create the inbox/outbox directories
+
+${c.bold('SEND')}
+  bus/buffer send --thread <name> --from <module> --to <module[,module]> \\
+                  --subject "..." --intent <intent> [--re <id>] [--via <module>]
+                  [--cc <module>] [--evidence none|external|repository]
+                  [--artifacts <path,path>] [--labels <a,b>] [--draft]
+                  [--date <UTC>] [--status <status>] [--reconstructed]
+                  [--body "..." | --file <path> | < body.md]
+
+  Intents:  ${Object.keys(core.INTENTS).join(', ')}
+  Statuses: ${Object.keys(core.STATUSES).join(', ')}
+
+${c.bold('EXAMPLES')}
+  bus/buffer send --thread cost-cut --from arena --to copilot \\
+      --intent review --re cost-cut.002.copilot --subject "Seven amendments to v2"
+
+  bus/buffer inbox copilot
+  bus/buffer thread cost-cut --full
+  bus/buffer route cost-cut.005.arena --to gpt
+  bus/buffer archive cost-cut.001.human --status superseded
+  bus/buffer validate --json
+
+${c.dim('Protocol: bus/PROTOCOL.md   Registry: bus/modules.json')}
+`);
+}
+
+// ------------------------------------------------------------------ main
+
+function main() {
+  const [, , cmd, ...rest] = process.argv;
+  const { flags, positional } = parseArgs(rest);
+
+  switch (cmd) {
+    case 'send':
+      return cmdSend(flags);
+    case 'validate':
+    case 'check':
+      return cmdValidate(flags);
+    case 'inbox':
+      return cmdInbox(positional, flags);
+    case 'thread':
+    case 'threads':
+      return cmdThread(positional, flags);
+    case 'route':
+      return cmdRoute(positional, flags);
+    case 'archive':
+      return cmdArchive(positional, flags);
+    case 'status':
+      return cmdStatus();
+    case 'modules':
+      return cmdModules(flags);
+    case 'init':
+      return cmdInit();
+    case 'reindex':
+      return cmdReindex();
+    case 'help':
+    case '--help':
+    case '-h':
+    case undefined:
+      return help();
+    default:
+      process.stderr.write(`${c.red('error')} unknown command "${cmd}"\n\n`);
+      help();
+      return process.exit(1);
+  }
+}
+
+main();

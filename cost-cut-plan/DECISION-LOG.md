@@ -83,3 +83,47 @@ assets there; where telemetry and reports are stored. Until then: phase 0 procee
 
 Status of the programme: **planning only. Nothing implemented, configured, or routed anywhere.**
 No claim of savings is made anywhere in this repository.
+
+## 2026-09-18 — Inter-module message bus adopted (`bus/`)
+The exchange between the operator, Claude, Copilot, and Arena AI was previously tracked only by folder
+naming (`en1`, `en2`, `re1`, `final`), which records *versions* but not *who asked whom for what, and what
+is still owed*. Adopted `bus/` — a git-backed message bus (`koken-bus/1`, spec in `bus/PROTOCOL.md`).
+
+Design decisions:
+- **Git is the transport.** A message is a file; sending is a commit. No API keys, no live connection, so
+  paste-only participants (GPT, and Copilot outside VS Code) are first-class rather than second-class.
+- **One canonical file per message**; `inbox/`, `outbox/`, and `archive/` hold pointers, so copies cannot
+  drift. `bus/buffer reindex` rebuilds the index from envelopes after a bad merge.
+- **Closed intent and status vocabularies**, so a recipient never has to infer whether it is being asked to
+  decide, to critique, or merely to read.
+- **Authority rule, mechanically enforced:** only `human` may send or set `status: agreed`; a later reply
+  can never downgrade an `agreed` decision. Agents propose, the operator ratifies.
+- **Evidence boundary carried in the envelope:** every message declares `evidence: none|external|repository`,
+  putting `re1/re1-evidence-boundary.md` in the header instead of in prose.
+
+Thread `cost-cut` messages 001–006 are back-filled from this log and the existing documents; they carry
+`reconstructed: true` and are **not** claimed to be verbatim transcripts of the original exchanges.
+
+Status: tooling and protocol only. **No change to any cost-cut conclusion, ranking, or claim.** Decisions
+C1 (ranking frozen) and C2 (plan container) stand.
+
+## 2026-09-18 — Target project identified (G1, G2 answered; C2 prerequisite partially cleared)
+Recorded on the bus as `cost-cut.007.human`.
+
+| # | Item | Answer |
+|---|---|---|
+| G1 | Target repository | `StepenkoAnatoli/WindowsRunner` |
+| G2 | Replay branch + commit | `main` @ `406bc654a2e8aea02f1e4dfc36c9ba4ad8aa6fdd` |
+| G4 | Project type | Windows-first, local-first coding agent |
+| G5 | Phase | Research/bootstrap only — no product code changes |
+| G6 | Checks available | 22 TypeScript tests; CI/test workflow requires no API key |
+| G7 | Instructions in force | `AGENTS.md` present and applies |
+
+Consequences: **F11 is answered in advance** — quality gates for T1–T3 can be test-based rather than
+review-based, removing the weakest link in the benchmark design. The replay tree is frozen, so T1–T3 can be
+defined against a fixed commit. `AGENTS.md` is the resident-prefix artifact that `I1`/EN1 would act on there.
+
+Still blocked: **G3** (execution client and provider account) and the telemetry storage location; **F1/F2**
+(billing mode and objective unit) remain unread, so **decision C1 stands unchanged** — the ranking is still
+frozen, `I1`-first is still a working hypothesis, and no savings are claimed. Per G5 (research/bootstrap
+only), the next action in the target project is **measurement, not change**.

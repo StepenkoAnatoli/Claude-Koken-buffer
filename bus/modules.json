@@ -1,0 +1,46 @@
+{
+  "spec": "koken-bus/1",
+  "note": "Registry of every party allowed to appear in a `from`, `to`, `cc`, or `via` field. Adding a module here plus `buffer init` is the only way to create a new participant.",
+  "modules": [
+    {
+      "id": "human",
+      "name": "Operator (Anatoli)",
+      "kind": "human",
+      "access": "repo",
+      "role": "Owner of the repository and of every decision. Relays messages between agents that cannot reach the repo, and is the only party that may mark a decision `agreed`.",
+      "notes": "Acts as `via` for copy-paste relays."
+    },
+    {
+      "id": "arena",
+      "name": "Arena.ai Agent Mode",
+      "kind": "agent",
+      "access": "repo",
+      "role": "Reviewer and repo-native implementer. Reads and writes this checkout directly, runs the CLI, commits, and opens pull requests.",
+      "notes": "Authored the `re1` review layer of the cost-cut thread."
+    },
+    {
+      "id": "copilot",
+      "name": "GitHub Copilot",
+      "kind": "agent",
+      "access": "mixed",
+      "role": "Planning and governance counterpart. Reaches the repo through VS Code when available, otherwise through copy-paste relay.",
+      "notes": "Authored the `en2` cost-cut plan v2."
+    },
+    {
+      "id": "claude",
+      "name": "Claude / Claude Code",
+      "kind": "agent",
+      "access": "mixed",
+      "role": "Implementation and long-context analysis. Subject of the cost-cut programme itself.",
+      "notes": "Reads messages pasted into a session, or directly when run as Claude Code in the checkout."
+    },
+    {
+      "id": "gpt",
+      "name": "ChatGPT / GPT",
+      "kind": "agent",
+      "access": "paste",
+      "role": "Third-opinion reviewer. Consumes messages pasted by the operator and returns bodies the operator commits.",
+      "notes": "No repo access assumed."
+    }
+  ]
+}
