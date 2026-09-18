@@ -3,25 +3,42 @@
 > This file describes what **will** be created/changed if approved. No file listed here exists yet.
 > Every knob name must be verified against the installed CLI version before use (condition V5).
 
+## Prerequisite (blocking, per decision C2)
+
+Phase-1 assets are **not created in this repository** (plan container only). They are created in the
+**measured target project**, which is not yet identified. Required first:
+
+```
+G1 repo owner/name          G5 representative task set
+G2 replay branch + commit   G6 permission to add phase-1 assets there
+G3 client + provider        G7 where telemetry/reports are stored
+G4 model + configuration
+```
+
+Until G1–G7 are recorded, phase 0 proceeds as **design work only**: protocol, templates, report structure,
+facts sweep. Nothing below is created anywhere.
+
 ## Assets that would be created on approval
 
-| Path (to create) | Purpose | Phase |
-|---|---|---|
-| `CLAUDE.md` | Dieted project memory: ≤200 lines / ≤2k tokens, only facts the model cannot infer. | 1 |
-| `.claude/settings.json` | Output caps (`MAX_MCP_OUTPUT_TOKENS`, `BASH_MAX_OUTPUT_LENGTH`), auto-compact threshold, effort level, `permissions.deny` with **bare tool names** for unused tools. | 1 |
-| `.mcp.json` (or per-task `--mcp-config`) | Only the MCP servers this project actually uses. | 1 |
-| `.claudeignore` | `node_modules/`, `dist/`, `build/`, `coverage/`, `logs/`, `*.log`, secrets. | 1 |
-| `tasks/t1..t3/*.md` | Replay-task prompts + acceptance checks for measurement. | 0 |
-| `HANDOFF.md` (template) | done / next / open decisions / exact files, for session boundaries. | 2 |
-| `docs/plan-template.md` | Task template: acceptance criteria first, scope ("start with these files; do not scan the repo"), verification step. | 2 |
-| `cost-cut-plan/reports/` | Per-phase measurement reports (before/after per lever). | 0–3 |
+| Path (to create) | Lives in | Purpose | Phase |
+|---|---|---|---|
+| **Kit commit** — `.claude/` template (**`CLAUDE.md`**, `settings.json`, `.mcp.json`/`--mcp-config`, `.claudeignore`), `HANDOFF.md` template, `docs/plan-template.md`, `tasks/t1..t3/*.md` | **here** (container: versioned, reviewable, portable) | The reviewable artifacts + the protocol | 0–2 |
+| **Applied copies** of the same files, adapted | **target project** (G1), with G6 permission | The actual diet, caps, thresholds, replay runs | 1–3 |
+| `reports/` — per-phase before/after tables | **here** | Measurement record the user can verify | 0–3 |
+
+Copying the kit into the target project is the only write action outside this repo, and it is reversible
+(config files, no product code). Replay tasks are executed in the target project at commit G2.
 
 ## Phase 0 — Instrument (day 0, no config change)
 
+0. **Record G1–G7** (target project, replay commit, client/provider, model config, task set, permission,
+   telemetry location). Until these exist, steps 1–2 are *design* work performed here and steps 3–4 cannot
+   be executed anywhere.
 1. Capture cold-start `/context` snapshot and one **counted** request (authoritative payload number).
-2. Create replay tasks T1–T3 with fixed starting commits.
-3. Record baseline: tokens (fresh/read/write), output tokens, turns, test-pass, rework, $/task.
-   Baseline is invalid unless reproducible on a second run.
+2. Create replay tasks T1–T3 with fixed starting commits (definitions reviewed here; executed in the target
+   project at G2).
+3. Record baseline: tokens (fresh/read/write), output tokens, turns, test-pass, rework, cost per completed
+   task in the unit chosen by C1. Baseline is invalid unless reproducible on a second run.
 
 ## Phase 1 — Payload + rate (`L1`, `L5`)
 

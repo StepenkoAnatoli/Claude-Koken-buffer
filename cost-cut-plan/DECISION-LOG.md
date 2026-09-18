@@ -51,6 +51,26 @@ Two items are decision-critical and not discoverable by any measurement: **C1** 
 remain unanswered, the position is *not guessed*: C2 blocks phase-1 asset placement, C1 blocks the ranking
 step; phase 0 and the sweep remain possible. Trade-offs T1–T6 recorded.
 
+## 2026-09-18 — C1 answered: objective unit DEFERRED (decide from the bill)
+Decision: do not choose dollars vs capacity now; **defer pending billing/usage verification**. Phase 0 may
+begin immediately; the **final ranking must not be finalised** until the bill or usage page identifies the
+active constraint. Evidence required before ranking: billing model, usage-window behaviour, token/cost
+visibility, batch availability, model-routing impact (F1/F2/F14–F16). **Temporary planning rule in force:
+`I1`/EN1 is the only cross-constraint candidate; `I4`/EN4 stays conditional with its rank deferred; no
+savings are claimed.** Rationale: avoids silently assuming pay-per-token billing; prevents prioritising rate
+routing where batch/model-rate routing may not exist; keeps `I1` valid under either constraint; keeps fact
+collection separate from recommendation; reversible.
+
+## 2026-09-18 — C2 answered: this repository is a PLAN CONTAINER only
+Decision: `Claude-Koken-buffer` holds planning, decision, experiment-design, and reporting material.
+**Phase-1 assets (target `CLAUDE.md`, target settings, replay tasks) must live in the actual measured target
+project or execution environment — not here.** Measurement cannot begin until that target is identified;
+treating this repo as the working project would invent a workload and make phase-1 measurements meaningless.
+**Open prerequisite (A23): identify the target project and record** — owner/name; branch or commit for replay;
+execution client and provider; model and configuration; representative task set; permission to add phase-1
+assets there; where telemetry and reports are stored. Until then: phase 0 proceeds as **design work only**
+(protocol, templates, report structure, facts sweep); phase 1 is not implemented or measured.
+
 ## Open — blocks both plans
 1. Environment facts (F1–F13) not yet measured → see `re1/re1-facts-sweep.md`.
 2. Objective function not chosen (API dollars vs subscription headroom vs weighted).

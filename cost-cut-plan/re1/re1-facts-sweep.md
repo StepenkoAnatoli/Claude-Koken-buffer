@@ -23,6 +23,28 @@ in the stated time, write `unavailable` — that is a valid result and it trigge
 | F12 | **Client surfaces in scope** | CLI only / + IDE / + API-SDK / CI; note whether `/context` and `/cost` exist in each | 2 min | |
 | F13 | **Adoption scope** | one machine or several; solo or team; does anything need to be checked in? | 2 min | |
 
+## Fact sweep, part 2 — target-project identification (required by C2 before phase 1)
+
+Answer all seven; without them there is no measured target and no legitimate phase 1.
+
+| # | Item | Answer |
+|---|---|---|
+| G1 | Repository owner/name where Claude coding work actually happens | |
+| G2 | Branch or commit to freeze for replay | |
+| G3 | Execution client and provider (CLI/IDE/API; which account) | |
+| G4 | Model and configuration in normal use (default model, effort, MCP servers) | |
+| G5 | Representative task set (or permission to use 2–3 recent real tasks) | |
+| G6 | Permission to add phase-1 assets there (`CLAUDE.md`, settings, replay task defs) | |
+| G7 | Where telemetry and reports are stored, and who may read them | |
+
+### Additional facts required by the C1 deferral
+
+| # | Fact to read | How | Answer |
+|---|---|---|---|
+| F14 | Usage-window behaviour (if subscription) — when does capacity reset, what consumes it | usage page / docs | |
+| F15 | Batch availability (if API) — is a 24h batch path available at a discount | provider docs/pricing | |
+| F16 | Model-routing impact — available tiers and their rate/quality difference *for this account* | provider docs + one trial run | |
+
 ## What each answer unlocks
 
 | Fact | Unlocks / unblocks |
@@ -36,6 +58,8 @@ in the stated time, write `unavailable` — that is a valid result and it trigge
 | F11 | Whether quality gates can be test-based or must be review-based |
 | F12 | Whether the measurement commands in both plans even exist |
 | F13 | Where config must live (user-level vs checked in) |
+| G1–G7 | **Where phase 1 may legally and measurably happen at all** — without these, phase 1 is not started |
+| F14–F16 | The C1 evidence set: resolving the objective unit and whether rate routing/batch applies here |
 
 ## Output
 

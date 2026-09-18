@@ -2,6 +2,23 @@
 
 Rule 0: **the headline metric is cost per completed task.** Tokens per response are a diagnostic, never a KPI.
 
+## Prerequisites (blocking — decision C2 / assumption A23)
+
+Measurement happens in the **measured target project**, not in this container repository. Before any run:
+
+| # | Requirement | Status |
+|---|---|---|
+| G1 | Target repo owner/name | **not yet recorded** |
+| G2 | Replay branch + frozen commit | not yet recorded |
+| G3 | Client + provider used for the runs | not yet recorded |
+| G4 | Model + configuration (default model, effort, MCP servers) | not yet recorded |
+| G5 | Representative task set | not yet recorded |
+| G6 | Permission to add phase-1 assets/config in that project | not yet recorded |
+| G7 | Location for telemetry + reports, and who may read them | not yet recorded |
+| C1 | Objective unit (dollars / capacity / weighted) | **deferred pending the bill** — until resolved, report in *both* units as a unit-labelled pair, or report as inconclusive |
+
+Until G1–G7 exist, this document is a **design**, not a plan in execution.
+
 ## Replay tasks (fixed, reused for every phase)
 
 | ID | Task shape | What it stresses |

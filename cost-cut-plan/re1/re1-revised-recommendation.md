@@ -20,6 +20,13 @@ LSP/index only if measured data demands it; keep `L6` (diff-shaped edits) as a r
 
 ## Staged plan
 
+**Execution location (decision C2, 2026-09-18):** this repository is a plan container. The kit (templates,
+protocol, report structure) is versioned here; the **applied copies** of phase-1/2/3 assets are created in the
+measured target project, which is not yet identified (A23). Nothing below is implemented anywhere until it is.
+
+**Ranking status (decision C1):** the objective unit is deferred pending the bill, so the phase ordering is a
+working hypothesis and the final ranking is frozen. `I1` is the only cross-constraint candidate.
+
 | Phase | Levers | What actually changes | Gate to exit the phase |
 |---|---|---|---|
 | **0 — Instrument** | — | Baseline on replay tasks T1–T3 (see `../final/final-measurement-plan.md`). No config change. | Baseline reproducible; per-completed-task cost recorded. |

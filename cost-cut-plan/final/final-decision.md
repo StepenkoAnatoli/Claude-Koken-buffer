@@ -3,6 +3,13 @@
 **Status: proposed final. Not approved, not applied.** No code, configuration, or workflow change is made
 until the user verifies this file.
 
+## Decisions already taken (2026-09-18)
+
+| ID | Decision | Effect on this plan |
+|---|---|---|
+| **C1** | Objective unit **deferred** pending billing/usage verification | Phase 0 may start; **final ranking frozen**; temporary rule: `I1` is the **only cross-constraint candidate**, `I4` conditional and unranked, no savings claimed |
+| **C2** | This repository is a **plan container only** | Phase-1 assets live in the **measured target project**, not here; measurement is blocked until that target is identified (A23) |
+
 ## Decision
 
 The decision is a **conditional process**, not a ranking:
@@ -20,9 +27,19 @@ Until step 5 completes, the intervention ordering below is a **working hypothesi
 
 ## Working hypothesis (subject to step 5)
 
-`I1` (prefix diet + cache freeze) first; `I4` (rate routing) next, provider-gated; `I3` (session shaping)
-conditional on measured session-tail waste, with `I3a` (knobs, zero behaviour change) separable from `I3b`
-(behavioural); `I2` (retrieval discipline) last, narrow, guarded by turns and rework.
+`I1` (prefix diet + cache freeze) is the **only cross-constraint candidate** — it holds whether the objective
+turns out to be dollars or subscription capacity (per decision C1, 2026-09-18). Its rank is provisional only
+in the sense that the final ranking is frozen until the bill is read; `I4` (rate routing) is **conditional and
+unranked**, since its pricing/batch assumptions may not apply under a subscription. `I3` (session shaping)
+remains conditional on measured session-tail waste, with `I3a` (knobs, zero behaviour change) separable from
+`I3b` (behavioural); `I2` (retrieval discipline) stays last, narrow, guarded by turns and rework.
+
+### Where phase 1 will be executed (per decision C2)
+
+**Not in this repository.** This repo is the plan/decision/reporting container. Phase-1 assets — the dieted
+target `CLAUDE.md`, target settings, replay task definitions — are created in the **measured target project**,
+which has not yet been identified (assumption A23; see `../re1/re1-assumption-register.md` §4, §5). Until it
+is, phase 0 proceeds as **design work only**.
 
 ### Why `I1` leads the hypothesis
 
@@ -60,6 +77,7 @@ own `/cost` and per-turn records, and re-rank. A plan that cannot fail its own t
 | V5 | Knob names and measurement commands confirmed against the installed client version | Copilot |
 | V6 | Rejection path confirmed: reverting config restores the baseline payload | Copilot |
 | V7 | **Primary objective chosen and documented** (dollars, capacity, or weighted) — required by the evidence boundary and by step 2 of the decision | user |
+| V8 | **Target project identified** (owner/name, replay branch+commit, client+provider, model/config, task set, permission, telemetry storage) — required before phase 1 can be implemented or measured anywhere | user |
 
 ## Non-negotiable rules carried from version 1
 

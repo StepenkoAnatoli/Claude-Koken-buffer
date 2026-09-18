@@ -33,7 +33,8 @@ consequence of error.
 | A13 | Users follow the workflow if it is visible/reversible/low-friction | D | v2 A8 | **open** | Bypass; plan decays into documentation | mitigation: only config-enforced levers on the critical path |
 | A14 | Replay tasks are reproducible from fixed commits here | F | my A8 | **open** | Phase gates degrade to bookkeeping | phase-0 dry run |
 | A15 | The target project has a usable test suite | F | my A10 | **open** | Quality gates become review-only; A4 asserted without evidence | F11 |
-| A16 | This repository is where the plan is applied | C | my A7 | **open — ASKED** | Phase 1 changes a repo that is not measured → effort invisible | C2 / F13 |
+| A16 | This repository is where the plan is applied | C | my A7 | **CLOSED — plan container only**; implementation target **not yet identified** | Phase 1 would change a repo that is not measured → effort invisible and unrepeatable | C2 answered 2026-09-18 |
+| A23 | The identity of the measured target project is known | C | — (**new**) | **open — blocks phase 1 and all measurement** | "Phase 1" has nowhere legitimate to live and nothing to measure; benchmarks would be invented rather than representative | user input: owner/name, replay branch+commit, client+provider, model/config, task set, permission, telemetry storage |
 | A17 | The facts sweep is owned and executed by the user | C | — (**new, was silent**) | **open** | The plan's critical path stalls with nobody owning it: complete, coherent, and inert | confirm ownership |
 | A18 | Measurement commands are available in the environment | F | my A3 (part) | **open** | Phase 0 cannot produce a baseline | F12 |
 | A19 | Quality is judged by test results + user review | F | my A10 | **open** | "Quality flat" asserted, not evidenced | F11 + F15 |
@@ -65,34 +66,53 @@ validating them; each is now falsifiable.
    sign-off V1–V7.
 9. **Version marks and canonical IDs are acceptable** — no objection raised to the `I1–I4` aliasing.
 
-## 4. Decision-critical and NOT discoverable → asked now
+## 4. Decisions taken on the two choice-class items (2026-09-18)
 
-Everything else in §2 is either readable (F), benchmarkable (B), or distributional (D). Only two items
-require a **value judgement that no measurement can supply**:
+### C1 — Objective unit: **deferred pending billing/usage verification**
+- **Phase 0: may begin immediately.**
+- **Final ranking: must not be finalised** until the bill or usage page identifies the active constraint.
+- **Required evidence before ranking:** billing model; usage-window behaviour; token/cost visibility; batch
+  availability; model-routing impact.
+- **Temporary planning rule in force:** `I1`/EN1 is the **only cross-constraint candidate**; `I4`/EN4 stays
+  conditional with its rank deferred; **no savings are claimed**.
+- **Why deferral is the correct choice here:** it avoids silently assuming pay-per-token billing; it prevents
+  prioritising rate routing when batch/model-rate routing may not exist; it keeps `I1` valid under either
+  constraint; it separates fact collection from recommendation; and it is reversible.
 
-- **C1 — objective unit** (partly readable as A1, but the *weighting* when both apply is a choice).
-- **C2 — what `Claude-Koken-buffer` is** (toolkit / working project / both / plan container).
+### C2 — Role of `Claude-Koken-buffer`: **plan container only**
+- The repository holds planning, decision, experiment-design, and reporting material. **Phase-1 assets live in
+  the actual measured target project** — not here. Measurement cannot begin until that target is identified.
+- Reason recorded: the repo is a clean slate (one-line README, no product code, no config, no workload,
+  no telemetry, no representative tasks). Treating it as the working project would invent a workload and make
+  phase-1 measurements meaningless. "Reusable toolkit" is unsupported (no defined interface or consumer);
+  "both" is premature.
+- **Required next input before phase 1:** identify the repository/project where Claude coding work actually
+  occurs, and record: owner/name; branch or commit used for replay; execution client and provider; model and
+  configuration; representative task set; permission to add phase-1 assets there; where telemetry and reports
+  should be stored.
 
-If either is left unanswered, the honest position is: **not guessed; the dependent step stays blocked.**
-Precisely what that blocks:
+### Consequence map
 
 | Blocked by | Not blocked |
 |---|---|
-| C2 → placement of phase-1 assets (`CLAUDE.md`, `.claude/settings.json`, replay tasks) | Phase 0 instrumentation and the facts sweep |
-| C1 → the ranking step (step 5) and the A2/A5 thresholds' unit | Steps 1–4 of the conditional chain |
-
+| **C1** → final ranking (step 5) and the units of the A2/A5 thresholds | Steps 1–4; the sweep; `I1` as a candidate |
+| **C2/A23** → phase-1 asset placement and all measurement | Phase 0 as *design* work: protocol, task template, report structure, and the facts sweep |
 ## 5. Missing information inventory
 
 | Missing item | Who can supply | Blocks | Route |
 |---|---|---|---|
-| Billing mode and units | user | Objective gate; whether `I4` batch/pricing applies | F1/F2 |
+| **Identity of the measured target project** (owner/name, replay branch+commit, permission) | user | **All of phase 1 and every measurement** (A23) | C2 follow-up |
+| Execution client + provider, model and configuration | user | Protocol validity (A3, A4, A5, A18) | C2 follow-up / F12 |
+| Representative task set in that project | user | Baseline T1–T3 (A14) | C2 follow-up / F11 |
+| Where telemetry and reports are stored | user | Reporting; privacy review | C2 follow-up |
+| Billing model + units | user | Objective gate; whether `I4` batch/pricing applies | F1/F2 |
+| Usage-window behaviour; batch availability; model-routing impact | user | C1 evidence set | F14–F16 |
 | Session distribution (turns, >80-turn sessions) | user | `I3b`; A10 | F10 |
 | Target project's test suite and commands | user | Quality gates A4; A15 | F11 |
 | Installed client version and available commands | user | V5; A5, A18 | F12 |
 | Frozen benchmark tasks and repos | user | Phase 0 baseline; A11, A12, A14 | T1–T3 |
-| Decision on the repo's role | user | Phase-1 asset placement | C2 |
 | Copilot's position on amendments §4.1–§4.7 | Copilot | Consolidation into `final/` | handoff |
-| Confirmation that the evidence boundary is binding for Copilot too | Copilot | Consistency of ranking language | handoff |
+| Confirmation that the evidence boundary binds Copilot too | Copilot | Consistency of ranking language | handoff |
 
 ## 6. Trade-offs taken so far (and what they cost)
 
