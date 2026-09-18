@@ -1,8 +1,9 @@
 # Claude-Koken-buffer — token-cost reduction plan
 
 **Status: PLAN ONLY — this repository is a plan container** (decision C2, 2026-09-18). It holds planning,
-decision, design, and reporting material. **Phase-1 assets belong in the measured target project**, which is
-not yet identified (A23); no code, configuration, routing, or workflow change has been applied anywhere.
+decision, design, and reporting material. **Phase-1 assets belong in the measured target project**, proposed on
+2026-09-18 as `StepenkoAnatoli/WindowsRunner` and awaiting user confirmation (A23 narrowed, not closed); no
+code, configuration, routing, or workflow change has been applied anywhere.
 Nothing in `final/` takes effect until the user verifies it.
 
 **Ranking status: FROZEN** (decision C1, 2026-09-18). The objective unit is deferred pending billing/usage
@@ -79,9 +80,11 @@ adds a turn, a defect, an unsafe omission, or unacceptable user effort is not a 
 
 ## Conditional recommendation (agreed — supersedes any ranking)
 
-Prerequisite for steps 3–5: **identify the measured target project** (G1–G7 in
-[`re1/re1-facts-sweep.md`](re1/re1-facts-sweep.md)) — this repo is a container, so there is nowhere legitimate
-to measure until that is recorded.
+Prerequisite for steps 3–5: **confirm the measured target project** (G1–G7 in
+[`re1/re1-facts-sweep.md`](re1/re1-facts-sweep.md)). As of the 2026-09-18 sweep, G1/G2 have concrete proposals
+(`StepenkoAnatoli/WindowsRunner` @ `406bc654a2e8`) and G3/G5/G6/G7 are still open, so there is still nowhere
+legitimate to measure. The facts sweep was executed on 2026-09-18; see
+[`DECISION-LOG.md`](DECISION-LOG.md) for what it confirmed, what it refuted, and what it could not reach.
 
 1. **Instrument first** — change no behaviour until measurement distinguishes successful work, retries,
    correction turns, cache usage, and failures.
