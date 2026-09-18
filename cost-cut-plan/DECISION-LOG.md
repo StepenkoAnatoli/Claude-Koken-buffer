@@ -38,6 +38,19 @@ and the other candidates under the matched protocol; (5) rank from repository-sp
 valuable; subscription/rate-limit headroom → rate-routing assumptions may not apply and the recurring-prefix
 intervention (`I1`/EN1) becomes more important. Binding on all documents — see `re1/re1-evidence-boundary.md`.
 
+## 2026-09-18 — Assumption register merged (v2 of the register)
+Merged the two independent assumption tables (mine A1–A10, Copilot v2's A1–A8) into one current register with
+classes: **F** = readable fact, **C** = choice, **B** = benchmark-measurable, **D** = distributional over
+weeks. Route, owner, and consequence of error recorded per row; closed items (doc-only scope, folder/naming,
+repo-sourced thresholds) marked as agreed. New entry **A17**: the facts sweep must be executed by the user —
+my sandbox has no access to their billing, session logs, or other repositories, so the critical path runs
+through their reading, not through more planning. Nine previously silent assumptions are now stated
+explicitly (§3 of the register), including this one and the reading of "Koken" as "token".
+Two items are decision-critical and not discoverable by any measurement: **C1** objective unit/weighting and
+**C2** the role of this repository. Both were asked again (sharper, two questions instead of four). If they
+remain unanswered, the position is *not guessed*: C2 blocks phase-1 asset placement, C1 blocks the ranking
+step; phase 0 and the sweep remain possible. Trade-offs T1–T6 recorded.
+
 ## Open — blocks both plans
 1. Environment facts (F1–F13) not yet measured → see `re1/re1-facts-sweep.md`.
 2. Objective function not chosen (API dollars vs subscription headroom vs weighted).
