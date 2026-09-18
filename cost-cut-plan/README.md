@@ -24,6 +24,7 @@ cost-cut-plan/
 ├── re1/                             revised after Arena AI review
 │   ├── re1-arena-feedback.md
 │   ├── re1-comparison-and-risks.md
+│   ├── re1-assumption-register.md   assumptions + decision-critical open questions
 │   └── re1-revised-recommendation.md
 └── final/                           proposed final, pending verification
     ├── final-decision.md
@@ -34,6 +35,8 @@ cost-cut-plan/
 
 ## How to read it in 3 minutes
 
+0. `re1/re1-assumption-register.md` — what is assumed, what is unknown, and what must be answered before
+   any phase starts. Answer §3 before reading the ranking; a wrong answer there invalidates parts of it.
 1. `en1/en1-four-approaches.md` — what version 1 proposed (patch-only output, symbol-focused context,
    tests as the task contract, concise interaction policy).
 2. `re1/re1-arena-feedback.md` — what holds, what is missing, what changes and why.
