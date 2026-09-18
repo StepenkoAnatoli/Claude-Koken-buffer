@@ -72,10 +72,14 @@ assets there; where telemetry and reports are stored. Until then: phase 0 procee
 (protocol, templates, report structure, facts sweep); phase 1 is not implemented or measured.
 
 ## Open — blocks both plans
-1. Environment facts (F1–F13) not yet measured → see `re1/re1-facts-sweep.md`.
-2. Objective function not chosen (API dollars vs subscription headroom vs weighted).
-3. `Claude-Koken-buffer`'s role not confirmed (toolkit / working project / both / plan container).
-4. Client surfaces and adoption scope not confirmed.
+1. **Target project not identified** (A23) → blocks phase 1 and *all* measurement: G1 repo owner/name,
+   G2 replay branch/commit, G3 client+provider, G4 model/config, G5 task set, G6 permission, G7 telemetry
+   and report storage. Phase 0 proceeds meanwhile as design work (protocol, templates, report structure).
+2. **Objective unit not chosen** (C1 deferred) → blocks the final ranking and the A2/A5 threshold units.
+   Evidence set: billing model, usage-window behaviour, token/cost visibility, batch availability,
+   model-routing impact (F1/F2/F14–F16).
+3. Environment facts F1–F16 not yet measured → see `re1/re1-facts-sweep.md` (10–60 minutes of reading,
+   none of which this agent can do on the user's behalf).
 
-Status of the programme: **planning only. Nothing implemented, nothing configured, nothing routed.**
+Status of the programme: **planning only. Nothing implemented, configured, or routed anywhere.**
 No claim of savings is made anywhere in this repository.
