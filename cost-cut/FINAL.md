@@ -1,80 +1,58 @@
-# FINAL — Validated cost-reduction plan
+# FINAL — cost-cut v2 decision plan
 
-## Decision
-Do not implement a broad token-optimization system. First validate and adopt the smallest change that produces measured savings without quality or usability regression:
+## Decision status
+No optimization has been approved for production. The recommendation is gated by evidence.
 
-1. **EN1 first:** reduce and freeze only redundant recurring instructions and payload.
-2. **EN4 second:** route eligible low-risk work to lower-cost or batch execution after provider facts and quality gates are verified.
-3. **EN3 third:** add soft, recoverable session-shaping guardrails only if session data shows a material tail.
-4. **EN2 last:** add retrieval tooling or stricter context filtering only if it reduces total task cost after rework.
+## Objective gate
+Choose one primary objective before benchmarking:
 
-The order is provisional until the experiments below are run. Evidence can reverse it.
+- API dollars per successfully completed task;
+- subscription or rate-limit headroom per successfully completed task;
+- or an explicitly weighted combination.
 
-## Objective function
-Before implementation, record the primary objective:
-- API dollars;
-- subscription or rate-limit headroom;
-- or a weighted combination.
+Report the other dimensions as constraints or secondary KPIs. If the objective is not chosen, only instrumentation and benchmark preparation may proceed.
 
-Report the other dimension as a constraint or secondary KPI. Do not compare options using incompatible objectives.
+## Environment gate
+Document the actual client, provider, model/version, effort setting, tools/MCP, cache behavior, pricing, rate limits, batch availability, privacy constraints, and available token telemetry. Claims from another environment are not transferable without verification.
 
-## Baseline experiment
-Select a representative, repeatable task with a known expected result. Capture:
-- model, effort, provider, cache mode, and tool configuration;
-- input, output, cache, and total tokens where available;
-- cost or rate-limit usage;
-- turns, latency, and rework;
-- tests, behavioral checks, security/accessibility checks where relevant;
-- final diff quality and user effort.
+## Recommendation
+1. **Instrument first.** Add no behavior change until measurements can distinguish successful work, retries, correction turns, cache usage, and failures.
+2. **Run the matched benchmark.** Use the task matrix and quality rubric in `BENCHMARK.md`.
+3. **Test EN1 first.** Remove only reviewed redundancy from the recurring prefix. Preserve security, acceptance, architecture, test, accessibility, and destructive-operation constraints.
+4. **Add EN4 only when supported by provider facts.** Route only eligible low-risk work; retain visible fallback and override.
+5. **Test EN3 only if session data shows material completed-task waste.** Begin with non-blocking checkpoints and recoverable handoffs, never arbitrary hard limits.
+6. **Test EN2 last and narrowly.** Use targeted context only where the benchmark shows lower completed-task cost and no missed dependency.
 
-Run the baseline more than once if variance is material. Freeze repository state and task wording.
+## Go/no-go gates
+Go only when all apply:
 
-## Stage 1 — EN1 replay
-Replay the same task with only the prefix diet changed. Go only when recurring tokens decrease as predicted and correctness, tests, rework, and review quality do not regress. If accounting disagrees with the model, stop and update this decision record.
+- the primary objective improves;
+- accounting reflects the claimed mechanism;
+- tests and behavioral review pass;
+- no high-severity security, privacy, or accessibility issue appears;
+- correction turns and defects do not exceed approved thresholds;
+- latency and user effort remain acceptable;
+- ownership, rollback, and maintenance are explicit.
 
-## Stage 2 — EN4 matched routes
-Verify current provider facts, then benchmark candidate routes on task classes. Route only eligible work, make the route visible, retain an override and fallback, and reject a route with meaningful quality, privacy, or latency regression.
+A token reduction alone is not a go decision.
 
-## Stage 3 — EN3 session guardrails
-Use observed session data to choose a threshold or checkpoint. Start with a non-blocking reminder and compact handoff format. Remove it if it interrupts legitimate work or increases abandonment and rework.
+## Falsification tests
+- If EN1 per-turn usage does not fall by approximately the removed recurring payload, reject or revise the cost model.
+- If a candidate saves prompt tokens but adds a correction turn, compare completed-task cost; reject it when total cost worsens.
+- If a lower-cost route changes quality or privacy outcomes, restrict or remove that route.
+- If session shaping reduces turns by increasing abandonment or unsafe shortcuts, reject it.
+- If targeted retrieval misses dependencies, widen context or reject the task class.
 
-## Stage 4 — EN2 retrieval pilot
-Pilot targeted retrieval on narrow task classes. Escalate context after uncertainty or failed validation. Do not deploy an indexer or LSP solely on projected savings.
+## Immediate next actions
+1. Assign the owner and reviewers in `ROLLOUT.md`.
+2. Choose and document the primary objective.
+3. Fill the environment and privacy fields in `ASSUMPTIONS.md` and `TELEMETRY.md`.
+4. Select frozen benchmark tasks and acceptance criteria.
+5. Run baseline measurements before changing behavior.
+6. Decide EN1 only from the baseline and matched replay.
 
-## KPIs and guardrails
-Primary KPI: selected objective per successfully completed task.
+## Long-term success definition
+The project succeeds when users complete correct work with less verified cost or capacity pressure, without extra cognitive burden, hidden quality loss, unsafe omissions, or unmaintainable infrastructure.
 
-Secondary KPIs:
-- total tokens per completed task;
-- turns and correction turns;
-- first-pass test success;
-- escaped defects and security findings;
-- latency;
-- user effort and override rate;
-- maintenance and failure overhead.
-
-A stage fails if it saves prompt tokens but increases completed-task cost, defects, unsafe omissions, or unacceptable user friction.
-
-## Falsification test
-If EN1 per-turn tokens do not fall by approximately the removed recurring payload on a controlled replay, the cost model is wrong and the ranking must be re-derived. If any candidate reduces tokens but causes an extra correction turn or quality regression, it is not a successful optimization.
-
-## Rollback
-Keep each change independently toggleable. Restore the prior prefix, route, session behavior, or retrieval mode immediately when guardrails fail. Preserve the experiment record so a rollback is not mistaken for a failure of measurement.
-
-## Completion criteria
-The plan is complete only when:
-- the objective and environment are documented;
-- baseline and matched experiments are reproducible;
-- measured savings are reported with limitations;
-- correctness and user-impact checks pass;
-- the chosen change has an owner, rollback, and maintenance expectation.
-
-## Current status
-Planning only. No code, provider configuration, routing logic, retrieval tooling, or session enforcement is authorized until the baseline experiment and objective are confirmed.
-
-## Open questions for final verification
-- What is the actual execution and billing environment?
-- Which task should be the benchmark?
-- Which objective has priority?
-- Who reviews correctness and user impact?
-- What regression threshold is acceptable?
+## Limitations
+This repository has no implementation, production telemetry, billing integration, or representative task history. The plan cannot claim actual savings until those facts are supplied and measured.

@@ -1,24 +1,23 @@
-# Cost reduction plan
+# Cost-cut plan v2
 
-## Purpose
-Reduce the cost and capacity pressure of Claude coding work without reducing correctness, trust, usability, or maintainability.
+This folder contains a decision-ready, implementation-free plan for reducing Claude coding costs without sacrificing correctness, trust, security, usability, or maintainability.
 
-## Repository status
-This is a greenfield repository with a one-line README and no existing implementation, telemetry, workflow, or benchmark. All numerical claims in the source proposal are therefore hypotheses until reproduced in this repository's chosen environment.
+## Decision status
+The previous ranking is replaced by a conditional recommendation. EN1 remains the first experiment, not a final decision, until the objective, billing environment, cache behavior, and benchmark results are verified.
 
-## Folder map
-- `EN1-prefix-diet.md` — recurring request-prefix reduction and cache discipline.
-- `EN2-retrieval-discipline.md` — targeted context retrieval.
-- `EN3-session-shaping.md` — control turn count and session growth.
-- `EN4-rate-routing.md` — model, effort, and batch routing.
-- `RE1-review.md` — evidence, risks, and decision review.
-- `FINAL.md` — validated recommendation and rollout plan.
+## Files
+- `README.md` — scope, status, and navigation.
+- `EN1-prefix-diet.md` through `EN4-rate-routing.md` — candidate interventions.
+- `RE1-review.md` — decision-quality review.
+- `ASSUMPTIONS.md` — assumptions and validation status.
+- `BENCHMARK.md` — task matrix, protocol, and quality rubric.
+- `TELEMETRY.md` — measurements, privacy, and reporting.
+- `ROLLOUT.md` — ownership, staged adoption, and rollback.
+- `DECISION-LOG.md` — dated decisions and evidence.
+- `FINAL.md` — gated recommendation and next actions.
 
-## Recommendation in one line
-Validate EN1 first, add low-risk EN4 routing only where the objective and provider support it, use EN3 only with practical guardrails, and defer EN2 until retrieval savings are proven to exceed rework cost.
+## Operating principle
+Optimize completed, correct user work—not prompt tokens in isolation. A change fails if it saves tokens but increases rework, defects, unsafe omissions, latency, or unacceptable user effort.
 
-## Decision standard
-A change is successful only when it reduces the selected objective (API dollars, rate-limit usage, or both) while preserving task correctness, security-relevant warnings, test outcomes, reviewability, and acceptable user effort.
-
-## Mark convention
-`EN1`–`EN4` are proposal tracks, `RE1` is review, and `FINAL` is the decision record. No implementation is authorized by these planning documents alone.
+## Current state
+Planning only. No implementation, routing logic, retrieval tooling, session enforcement, or provider configuration has been added.
